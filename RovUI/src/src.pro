@@ -41,3 +41,19 @@ HEADERS += \
 include(deps/deps.pri)
 
 RESOURCES +=
+
+#INCLUDEPATH += $(HOME)/opencv-build/build2/include/opencv4/
+
+#LIBS += -L$(HOME)/opencv-build/build2/lib \
+#        -lopencv_core \
+#        -lopencv_imgproc \
+#        -lopencv_imgcodecs \
+#        -lopencv_highgui \
+#        -lopencv_objdetect \
+#        -lopencv_videoio
+
+#LIBS += $(HOME)/opencv-build/build/lib/libopencv_core.so
+#LIBS += $(HOME)/opencv-build/build/lib/libopencv_imgproc.so
+#LIBS += $(HOME)/opencv-build/build/lib/libopencv_imgcodecs.so
+#LIBS += $(HOME)/opencv-build/build/lib/libopencv_highgui.so
+#LIBS += $(HOME)/opencv-build/build/lib/libopencv_objdetect.so

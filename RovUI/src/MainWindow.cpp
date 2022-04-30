@@ -39,6 +39,12 @@ void MainWindow::createMenus()
     QMenu* settings = menuBar()->addMenu(tr("Настройки"));
     settings->addAction(m_openJoystickSettings.data());
     settings->addAction(m_openDebugDialog.data());
+
+    QMenu* mosaic = menuBar()->addMenu(tr("Мозаика"));
+    mosaic->addAction(m_takePhoto.data());
+    mosaic->addAction(m_onePhotoBack.data());
+    mosaic->addAction(m_clearPhotos.data());
+    mosaic->addAction(m_sendPhotoToFlash.data());
 }
 
 void MainWindow::createDocks()
@@ -103,6 +109,48 @@ void MainWindow::createConnections()
     QObject::connect(m_openDebugDialog.data(), &QAction::triggered, [this](bool) {
         m_debugDialog.data()->show();
     });
+
+    QObject::connect(m_takePhoto.data(), &QAction::triggered, [this](bool) {
+        takePhoto();
+    });
+
+    QObject::connect(m_onePhotoBack.data(), &QAction::triggered, [this](bool) {
+        m_cameraWidget->onePhotoBack();
+    });
+
+    QObject::connect(m_clearPhotos.data(), &QAction::triggered, [this](bool) {
+        m_cameraWidget->clearPhotos();
+    });
+
+    QObject::connect(m_sendPhotoToFlash.data(), &QAction::triggered, [this](bool) {
+        sendPhotoToFlash();
+    });
+}
+
+void MainWindow::takePhoto()
+{
+    QDir dir("../photo/");
+    if (!dir.exists()) dir.mkpath(".");
+
+    m_cameraWidget->takePhoto();
+}
+
+void MainWindow::sendPhotoToFlash()
+{
+    if (QDir(flashPath).exists())
+    {
+        QDir dir(flashPath + "photo/");
+        if (dir.exists()) {
+            for (int i = 1; i < 9; i++) {
+                dir.remove(QString::number(i) + ".png");
+            }
+        }
+        else dir.mkpath(".");
+
+        for (int i = 1; i < 9; i++) {
+            QFile::copy("../photo/" + QString::number(i) + ".png", flashPath + "photo/" + QString::number(i) + ".png");
+        }
+    }
 }
 
 void MainWindow::createActions()
@@ -112,4 +160,10 @@ void MainWindow::createActions()
     m_switchCameraAct.reset(new QAction(tr("Переключить камеру (мультиплексор)"), this));
     m_openJoystickSettings.reset(new QAction(tr("Настройки джойстика"), this));
     m_openDebugDialog.reset(new QAction(tr("Отладка движителей"), this));
+
+    //mosaic
+    m_takePhoto.reset(new QAction(tr("Сделать фото"), this));
+    m_onePhotoBack.reset(new QAction(tr("Одно фото назад"), this));
+    m_clearPhotos.reset(new QAction(tr("Очистить фото"), this));
+    m_sendPhotoToFlash.reset(new QAction(tr("Отправить фото на флешку"), this));
 }

@@ -56,5 +56,5 @@ private:
     QScopedPointer<QAction> m_sendPhotoToFlash;
 
     //andrew ubuntu config
-    QString flashPath = "/media/andrew/FLASH/";
+    QString flashPath = "/media/rcteam/FLASH/";
 };

@@ -49,16 +49,32 @@ void SfJoystick::timerEvent(QTimerEvent*)
     sf::Joystick::update();
 
     if (isConnected()) {
-        m_x = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis());
+        if (m_x_old + 20 > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis()) || m_x_old - 10 < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis())) m_x = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis());
+        if (m_x_old < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis())) m_x_old += 20;
+        if (m_x_old > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis())) m_x_old -= 20;
+        m_x = m_x_old;
+//        m_x = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->xAxis());
         m_joystickSettingsDialog.data()->isXInvese() ? m_x *= -1 : m_x *= 1;
 
-        m_y = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis());
+        if (m_y_old + 20 > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis()) || m_y_old - 10 < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis())) m_y = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis());
+        if (m_y_old < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis())) m_y_old += 20;
+        if (m_y_old > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis())) m_y_old -= 20;
+        m_y = m_y_old;
+//        m_y = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->yAxis());
         m_joystickSettingsDialog.data()->isYInvese() ? m_y *= -1 : m_y *= 1;
 
-        m_z = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis());
+        if (m_z_old + 20 > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis()) || m_z_old - 10 < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis())) m_z = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis());
+        if (m_z_old < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis())) m_z_old += 20;
+        if (m_z_old > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis())) m_z_old -= 20;
+        m_z = m_z_old;
+//        m_z = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->zAxis());
         m_joystickSettingsDialog.data()->isZInvese() ? m_z *= -1 : m_z *= 1;
 
-        m_w = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis());
+        if (m_w_old + 20 > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis()) || m_w_old - 10 < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis())) m_w = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis());
+        if (m_w_old < (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis())) m_w_old += 20;
+        if (m_w_old > (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis())) m_w_old -= 20;
+        m_w = m_w_old;
+//        m_w = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->wAxis());
         m_joystickSettingsDialog.data()->isWInvese() ? m_w *= -1 : m_w *= 1;
 
         m_servoX = (int)sf::Joystick::getAxisPosition(0, m_joystickSettingsDialog.data()->servoXAxis());
@@ -79,7 +95,9 @@ void SfJoystick::timerEvent(QTimerEvent*)
         RovSingleton::instance()->control().axisX = static_cast<qint8>(m_x);
         RovSingleton::instance()->control().axisY = static_cast<qint8>(m_y);
         RovSingleton::instance()->control().axisZ = static_cast<qint8>(m_z);
-        RovSingleton::instance()->control().cameraRotation[0] = static_cast<qint8>(m_servoX);
+//        RovSingleton::instance()->control().cameraRotation[0] = static_cast<qint8>(m_servoX);
+//        RovSingleton::instance()->control().cameraRotation[1] = static_cast<qint8>(m_servoY);
+        RovSingleton::instance()->control().cameraRotation[0] = static_cast<qint8>(m_servoY);
         RovSingleton::instance()->control().cameraRotation[1] = static_cast<qint8>(m_servoY);
         RovSingleton::instance()->control().manipulatorRotation = m_manipulatorRotate;
         RovSingleton::instance()->control().manipulatorOpenClose = sf::Joystick::isButtonPressed(0, m_joystickSettingsDialog.data()->manipulatorOpenButton()) - sf::Joystick::isButtonPressed(0, m_joystickSettingsDialog.data()->manipulatorCloseButton());
@@ -91,6 +109,10 @@ void SfJoystick::timerEvent(QTimerEvent*)
             }
             m_camSelectOldState = camSelectButtonState;
         }
+
+        if (sf::Joystick::isButtonPressed (0, 6)) RovSingleton::instance()->setThrustScaleFactor(0.25f);
+        if (sf::Joystick::isButtonPressed (0, 5)) RovSingleton::instance()->setThrustScaleFactor(0.5f);
+        if (sf::Joystick::isButtonPressed (0, 4)) RovSingleton::instance()->setThrustScaleFactor(1.0f);
 
     } else {
         RovSingleton::instance()->control().axisW = static_cast<qint8>(0);

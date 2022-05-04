@@ -31,10 +31,10 @@ private slots:
     void timerEvent(QTimerEvent*);
 
 private:
-    int m_x = 0;
-    int m_y = 0;
-    int m_z = 0;
-    int m_w = 0;
+    int m_x = 0; int m_x_old = 0;
+    int m_y = 0; int m_y_old = 0;
+    int m_z = 0; int m_z_old = 0;
+    int m_w = 0; int m_w_old = 0;
     int m_servoX = 0;
     int m_servoY = 0;
     int m_manipulatorRotate = 0;

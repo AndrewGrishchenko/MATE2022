@@ -42,7 +42,7 @@ void RovCameraWidget::startCapture()
 //            break;
 //        }
 //    }
-//    camera.release();
+//    ca1era.release();
 //    device_count -= 1;
 //    qDebug() << m_cameraList->currentIndex();
 

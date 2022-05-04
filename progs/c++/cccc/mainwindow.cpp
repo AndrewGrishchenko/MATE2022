@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-//    cap.open(0);
+    cap.open(0);
     ui->setupUi(this);
     timer = new QTimer(this);
     timer->start(25);
@@ -40,13 +40,13 @@ vector<vector<Point>> findCnt(Mat img, Scalar low, Scalar up) {
 void MainWindow::DisplayImage()
 {
 
-    Mat img; /*cap.read(img); */ img = imread("work.jpg"); cvtColor(img, img, COLOR_BGR2RGB);
+    Mat img; /* cap.read(img); */ img = imread("work.jpg"); cvtColor(img, img, COLOR_BGR2RGB);
     if(img.empty())return;
 
     Mat mask, mask1, hsv;
     Rect rect;
-    Scalar low = Scalar(100, 50, 50);
-    Scalar up = Scalar(255, 204, 204);
+    Scalar low = Scalar(100, 50, 160);
+    Scalar up = Scalar(140, 256, 256);
     Scalar low1 = Scalar(0, 50, 100);
     Scalar up1 = Scalar(60, 144, 197);
     vector<vector<Point> > cnt;
@@ -58,6 +58,7 @@ void MainWindow::DisplayImage()
 
     cnt = findCnt(img, low, up);
     cnt1 = findCnt(img, low1, up1);
+//    qDebug() << cnt.size() << cnt1.size();
 //    cvtColor(img, hsv, COLOR_RGB2HSV);
 //    inRange(hsv, low, up, mask);
 //    findContours(mask, cnt, RETR_TREE, CHAIN_APPROX_SIMPLE);
@@ -72,9 +73,10 @@ void MainWindow::DisplayImage()
         if (w > h) m = w;
         else m = h;
     }
+
     for (auto count : cnt1) {
         area = contourArea(count);
-        if (abs(area) < 1) continue;
+        if (abs(area) < 10) continue;
         approxPolyDP(count, count, arcLength(count, true) * 0.02, true);
         rect = boundingRect(count); w = rect.width; h = rect.height;
         if (w > h) m1 = w;
@@ -86,8 +88,11 @@ void MainWindow::DisplayImage()
     if (40 < r and r < 180) cout << r << endl;
     else cout << "not" << endl;
 
+//    cv::cvtColor(img, hsv, cv::COLOR_RGB2HSV);
+//    cv::inRange(hsv, low1, up1, hsv);
+//    cv::imshow("img", hsv);
     showFrame(img);
-    waitKey(1);
+    waitKey(50);
 
 }
 

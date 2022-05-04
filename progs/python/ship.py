@@ -35,10 +35,10 @@ def draw_pool():
     screen.fill((255, 255, 255))
     pygame.draw.line(screen, (250, 240, 50), (32, 261), (32, 0), 6)
     pygame.draw.line(screen, (250, 240, 50), (870, 261), (870, 0), 6)
-    pygame.draw.line(screen, (0, 0, 0), (32, 87), (32, 174), 6)
-    pygame.draw.line(screen, (0, 0, 0), (870, 87), (870, 174), 6)
-    pygame.draw.line(screen, (60, 70, 190), (36, 257), (867, 257), 6)
-    pygame.draw.line(screen, (60, 70, 190), (36, 3), (867, 3), 6)
+    pygame.draw.line(screen, (0, 0, 255), (32, 87), (32, 174), 6)
+    pygame.draw.line(screen, (0, 0, 255), (870, 87), (870, 174), 6)
+    pygame.draw.line(screen, (0, 0, 0), (36, 257), (867, 257), 6)
+    pygame.draw.line(screen, (0, 0, 0), (36, 3), (867, 3), 6)
     pygame.draw.line(screen, (220, 130, 180), (36, 130), (867, 130), 2)
     pygame.draw.line(screen, (220, 130, 180), (238, 254), (238, 7), 2)
     pygame.draw.line(screen, (220, 130, 180), (445, 254), (445, 7), 2)
@@ -113,6 +113,8 @@ while True:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            pygame.image.save(screen, "/home/andrew/window.png")
+            print("eee")
             pygame.quit()
             sys.exit()
     pygame.display.flip()

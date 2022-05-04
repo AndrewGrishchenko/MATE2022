@@ -45,6 +45,9 @@ void MainWindow::createMenus()
     mosaic->addAction(m_onePhotoBack.data());
     mosaic->addAction(m_clearPhotos.data());
     mosaic->addAction(m_sendPhotoToFlash.data());
+
+    QMenu* ship = menuBar()->addMenu(tr("Корабль"));
+    ship->addAction(m_startStopCountShip.data());
 }
 
 void MainWindow::createDocks()
@@ -125,6 +128,10 @@ void MainWindow::createConnections()
     QObject::connect(m_sendPhotoToFlash.data(), &QAction::triggered, [this](bool) {
         sendPhotoToFlash();
     });
+
+    QObject::connect(m_startStopCountShip.data(), &QAction::triggered, [this](bool) {
+        m_cameraWidget->isCountShip = !m_cameraWidget->isCountShip;
+    });
 }
 
 void MainWindow::takePhoto()
@@ -166,4 +173,7 @@ void MainWindow::createActions()
     m_onePhotoBack.reset(new QAction(tr("Одно фото назад"), this));
     m_clearPhotos.reset(new QAction(tr("Очистить фото"), this));
     m_sendPhotoToFlash.reset(new QAction(tr("Отправить фото на флешку"), this));
+
+    //shipLength
+    m_startStopCountShip.reset(new QAction(tr("Измерение корабля"), this));
 }

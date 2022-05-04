@@ -55,6 +55,9 @@ private:
     QScopedPointer<QAction> m_clearPhotos;
     QScopedPointer<QAction> m_sendPhotoToFlash;
 
+    //shipLength
+    QScopedPointer<QAction> m_startStopCountShip;
+
     //andrew ubuntu config
     QString flashPath = "/media/rcteam/FLASH/";
 };

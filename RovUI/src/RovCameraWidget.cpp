@@ -5,6 +5,8 @@
 #include <QVBoxLayout>
 #include <QDir>
 
+using namespace std;
+
 RovCameraWidget::RovCameraWidget(QWidget* parent)
     : QStackedWidget(parent)
     //, m_cameraView(new QCameraViewfinder(this))
@@ -22,7 +24,12 @@ RovCameraWidget::RovCameraWidget(QWidget* parent)
     proccessTimer->setInterval(50);
     proccessTimer->start();
 
+    shipTimer = new QTimer(this);
+    shipTimer->setInterval(50);
+    shipTimer->start();
+
     connect(proccessTimer, &QTimer::timeout, this, &RovCameraWidget::proccessCamera);
+    connect(shipTimer, &QTimer::timeout, this, &RovCameraWidget::countShip);
 
     addWidget(m_cameraLabel.data());
 }
@@ -167,6 +174,7 @@ void RovCameraWidget::createConnections()
     });
 }
 
+//mosaic
 void RovCameraWidget::takePhoto()
 {
     if (isProccessCamera)
@@ -199,5 +207,79 @@ void RovCameraWidget::clearPhotos()
         for (int i = 1; i < 9; i++) {
             dir.remove(QString::number(i) + ".png");
         }
+    }
+}
+
+
+//shipLength
+vector<vector<cv::Point>> findCnt(cv::Mat img, cv::Scalar low, cv::Scalar up) {
+    cv::Mat hsv, mask;
+    vector<vector<cv::Point>> cnt;
+    cv::cvtColor(img, hsv, cv::COLOR_RGB2HSV);
+    cv::inRange(hsv, low, up, mask);
+    cv::findContours(mask, cnt, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    return cnt;
+}
+
+void RovCameraWidget::countShip()
+{
+    if (isCountShip && isProccessCamera)
+    {
+        cv::Mat img;
+        cap.read(img);
+    //    img = imread("work.jpg");
+        cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+        if(img.empty())return;
+
+        cv::Mat mask, mask1, hsv;
+        cv::Rect rect;
+        cv::Scalar low = cv::Scalar(100, 50, 160);
+        cv::Scalar up = cv::Scalar(140, 256, 256);
+        cv::Scalar low1 = cv::Scalar(0, 50, 100);
+        cv::Scalar up1 = cv::Scalar(60, 144, 197);
+        vector<vector<cv::Point>> cnt;
+        vector<vector<cv::Point>> cnt1;
+
+        double m = 0, m1 = 0;
+        int area;
+        int w, h, r;
+
+        cnt = findCnt(img, low, up);
+        cnt1 = findCnt(img, low1, up1);
+    //    qDebug() << cnt.size() << cnt1.size();
+    //    cvtColor(img, hsv, COLOR_RGB2HSV);
+    //    inRange(hsv, low, up, mask);
+    //    findContours(mask, cnt, RETR_TREE, CHAIN_APPROX_SIMPLE);
+    //    inRange(hsv, low1, up1, mask1);
+    //    findContours(mask1, cnt1, RETR_TREE, CHAIN_APPROX_SIMPLE);
+
+        for (auto count : cnt) {
+            area = cv::contourArea(count);
+            if (abs(area) < 1) continue;
+            cv::approxPolyDP(count, count, cv::arcLength(count, true) * 0.02, true);
+            rect = cv::boundingRect(count); w = rect.width; h = rect.height;
+            if (w > h) m = w;
+            else m = h;
+        }
+
+        for (auto count : cnt1) {
+            area = cv::contourArea(count);
+            if (abs(area) < 10) continue;
+            cv::approxPolyDP(count, count, cv::arcLength(count, true) * 0.02, true);
+            rect = cv::boundingRect(count); w = rect.width; h = rect.height;
+            if (w > h) m1 = w;
+            else m1 = h;
+        }
+
+        if (m != 0) r = m1 / m * 30;
+        r += r * 0.25;
+        if (40 < r and r < 180) qDebug() << r;
+        else qDebug() << "not";
+
+    //    cv::cvtColor(img, hsv, cv::COLOR_RGB2HSV);
+    //    cv::inRange(hsv, low1, up1, hsv);
+    //    cv::imshow("img", hsv);
+    //    showFrame(img);
+//        cv::waitKey(1);
     }
 }

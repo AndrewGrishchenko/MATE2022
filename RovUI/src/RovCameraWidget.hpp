@@ -11,16 +11,20 @@
 #include <QTimer>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/video.hpp>
+#include <vector>
 
 class RovCameraWidget : public QStackedWidget {
     Q_OBJECT
 public:
     explicit RovCameraWidget(QWidget* parent = nullptr);
+
+    bool isCountShip = false;
 signals:
 public slots:
     void startCapture();
@@ -31,6 +35,9 @@ public slots:
     void takePhoto();
     void onePhotoBack();
     void clearPhotos();
+
+    //shipLength
+    void countShip();
 
 private:
     enum WidgetType {
@@ -58,4 +65,7 @@ private:
 
     //mosaic
     int mosaicPhotoNum = 1;
+
+    //shipLength
+    QTimer* shipTimer;
 };

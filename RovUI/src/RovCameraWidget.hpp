@@ -25,6 +25,9 @@ public:
     explicit RovCameraWidget(QWidget* parent = nullptr);
 
     bool isCountShip = false;
+    int fishCount = 6;
+    int currentFishNum = 1;
+    int mosaicPhotoNum = 1;
 signals:
 public slots:
     void startCapture();
@@ -32,13 +35,14 @@ public slots:
     QCamera::Status cameraStatus();
 
     //mosaic
-    void takePhoto();
-    void onePhotoBack();
-    void clearPhotos();
+    void takeMosaicPhoto();
+    void mosaicPhotoBack();
 
     //shipLength
     void countShip();
 
+    //fishLength
+    void takeFishPhoto();
 private:
     enum WidgetType {
         CameraSelectionWidget = 0,
@@ -62,9 +66,6 @@ private:
     void proccessCamera();
     bool isProccessCamera = false;
     cv::VideoCapture cap;
-
-    //mosaic
-    int mosaicPhotoNum = 1;
 
     //shipLength
     QTimer* shipTimer;

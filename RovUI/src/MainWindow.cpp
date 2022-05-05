@@ -25,6 +25,12 @@ MainWindow::MainWindow(QWidget* parent)
     createDocks();
     setCentralWidget(m_cameraWidget.data());
     setMinimumSize(640, 480);
+
+    transectTimer = new QTimer(this);
+    transectTimer->setInterval(20);
+    transectTimer->start();
+
+    connect(transectTimer, &QTimer::timeout, this, &MainWindow::transect);
 }
 
 MainWindow::~MainWindow() {}
@@ -41,13 +47,28 @@ void MainWindow::createMenus()
     settings->addAction(m_openDebugDialog.data());
 
     QMenu* mosaic = menuBar()->addMenu(tr("Мозаика"));
-    mosaic->addAction(m_takePhoto.data());
-    mosaic->addAction(m_onePhotoBack.data());
-    mosaic->addAction(m_clearPhotos.data());
-    mosaic->addAction(m_sendPhotoToFlash.data());
+    mosaic->addAction(m_takeMosaicPhoto.data());
+    mosaic->addAction(m_mosaicPhotoBack.data());
+    mosaic->addAction(m_sendMosaicToFlash.data());
 
     QMenu* ship = menuBar()->addMenu(tr("Корабль"));
     ship->addAction(m_startStopCountShip.data());
+
+    QMenu* fish = menuBar()->addMenu(tr("Рыбов"));
+    fish->addAction(m_takeFishPhoto.data());
+    fish->addAction(m_fishPhotoBack.data());
+    fish->addAction(m_sendFishToFlash.data());
+
+    QMenu* env = menuBar()->addMenu(tr("Env"));
+    env->addAction(m_clearAllPhotos.data());
+    env->addAction(m_clearMosaicPhotos.data());
+    env->addAction(m_clearFishPhotos.data());
+    env->addAction(m_clearAllFlash.data());
+    env->addAction(m_clearMosaicFlash.data());
+    env->addAction(m_clearFishFlash.data());
+
+    QMenu* autos = menuBar()->addMenu(tr("Autos"));
+    autos->addAction(m_startStopTransect.data());
 }
 
 void MainWindow::createDocks()
@@ -96,68 +117,78 @@ void MainWindow::createConnections()
     QObject::connect(m_startCameraAct.data(), &QAction::triggered, [this](bool) {
         m_cameraWidget->startCapture();
     });
-
     QObject::connect(m_stopCameraAct.data(), &QAction::triggered, [this](bool) {
         m_cameraWidget->stopCapture();
     });
-
     QObject::connect(m_switchCameraAct.data(), &QAction::triggered, [this](bool) {
         RovSingleton::instance()->control().cameraIndex = (RovSingleton::instance()->control().cameraIndex + 1) % 2;
     });
-
     QObject::connect(m_openJoystickSettings.data(), &QAction::triggered, [this](bool) {
         m_joystick.data()->settingsDialog()->show();
     });
-
     QObject::connect(m_openDebugDialog.data(), &QAction::triggered, [this](bool) {
         m_debugDialog.data()->show();
     });
 
-    QObject::connect(m_takePhoto.data(), &QAction::triggered, [this](bool) {
-        takePhoto();
+
+
+    //mosaic
+    QObject::connect(m_takeMosaicPhoto.data(), &QAction::triggered, [this](bool) {
+        m_cameraWidget->takeMosaicPhoto();
+    });
+    QObject::connect(m_mosaicPhotoBack.data(), &QAction::triggered, [this](bool) {
+        mosaicPhotoBack();
+    });
+    QObject::connect(m_sendMosaicToFlash.data(), &QAction::triggered, [this](bool) {
+        sendMosaicToFlash();
     });
 
-    QObject::connect(m_onePhotoBack.data(), &QAction::triggered, [this](bool) {
-        m_cameraWidget->onePhotoBack();
-    });
 
-    QObject::connect(m_clearPhotos.data(), &QAction::triggered, [this](bool) {
-        m_cameraWidget->clearPhotos();
-    });
-
-    QObject::connect(m_sendPhotoToFlash.data(), &QAction::triggered, [this](bool) {
-        sendPhotoToFlash();
-    });
-
+    //shipLength
     QObject::connect(m_startStopCountShip.data(), &QAction::triggered, [this](bool) {
-        m_cameraWidget->isCountShip = !m_cameraWidget->isCountShip;
+        m_cameraWidget->countShip();
     });
-}
 
-void MainWindow::takePhoto()
-{
-    QDir dir("../photo/");
-    if (!dir.exists()) dir.mkpath(".");
 
-    m_cameraWidget->takePhoto();
-}
+    //fishLength
+    QObject::connect(m_takeFishPhoto.data(), &QAction::triggered, [this](bool) {
+        m_cameraWidget->takeFishPhoto();
+    });
+    QObject::connect(m_fishPhotoBack.data(), &QAction::triggered, [this](bool) {
+        fishPhotoBack();
+    });
+    QObject::connect(m_sendFishToFlash.data(), &QAction::triggered, [this](bool) {
+        sendFishToFlash();
+    });
 
-void MainWindow::sendPhotoToFlash()
-{
-    if (QDir(flashPath).exists())
-    {
-        QDir dir(flashPath + "photo/");
-        if (dir.exists()) {
-            for (int i = 1; i < 9; i++) {
-                dir.remove(QString::number(i) + ".png");
-            }
-        }
-        else dir.mkpath(".");
 
-        for (int i = 1; i < 9; i++) {
-            QFile::copy("../photo/" + QString::number(i) + ".png", flashPath + "photo/" + QString::number(i) + ".png");
-        }
-    }
+    //env
+    QObject::connect(m_clearAllPhotos.data(), &QAction::triggered, [this](bool) {
+        clearAllPhotos();
+    });
+    QObject::connect(m_clearMosaicPhotos.data(), &QAction::triggered, [this](bool) {
+        clearMosaicPhotos();
+    });
+    QObject::connect(m_clearFishPhotos.data(), &QAction::triggered, [this](bool) {
+        clearFishPhotos();
+    });
+    QObject::connect(m_clearAllFlash.data(), &QAction::triggered, [this](bool) {
+        clearAllFlash();
+    });
+    QObject::connect(m_clearMosaicFlash.data(), &QAction::triggered, [this](bool) {
+        clearMosaicFlash();
+    });
+    QObject::connect(m_clearFishFlash.data(), &QAction::triggered, [this](bool) {
+        clearFishFlash();
+    });
+
+
+    //transect
+    QObject::connect(m_startStopTransect.data(), &QAction::triggered, [this](bool) {
+        keepingDepth = RovSingleton::instance()->telimetry().depth;
+        keepingYaw = RovSingleton::instance()->telimetry().yaw;
+        isTransect = !isTransect;
+    });
 }
 
 void MainWindow::createActions()
@@ -169,11 +200,179 @@ void MainWindow::createActions()
     m_openDebugDialog.reset(new QAction(tr("Отладка движителей"), this));
 
     //mosaic
-    m_takePhoto.reset(new QAction(tr("Сделать фото"), this));
-    m_onePhotoBack.reset(new QAction(tr("Одно фото назад"), this));
-    m_clearPhotos.reset(new QAction(tr("Очистить фото"), this));
-    m_sendPhotoToFlash.reset(new QAction(tr("Отправить фото на флешку"), this));
+    m_takeMosaicPhoto.reset(new QAction(tr("Фото"), this));
+    m_mosaicPhotoBack.reset(new QAction(tr("Назад"), this));
+    m_sendMosaicToFlash.reset(new QAction(tr("Отправить"), this));
 
     //shipLength
     m_startStopCountShip.reset(new QAction(tr("Измерение корабля"), this));
+
+    //fishLength
+    m_takeFishPhoto.reset(new QAction(tr("Фото"), this));
+    m_fishPhotoBack.reset(new QAction(tr("Назад"), this));
+    m_sendFishToFlash.reset(new QAction(tr("Отправить"), this));
+
+    //env
+    m_clearAllPhotos.reset(new QAction(tr("Очистить все"), this));
+    m_clearMosaicPhotos.reset(new QAction(tr("Очистить мозаику"), this));
+    m_clearFishPhotos.reset(new QAction(tr("Очистить рыбов"), this));
+    m_clearAllFlash.reset(new QAction(tr("Очистить все флешка"), this));
+    m_clearMosaicFlash.reset(new QAction(tr("Очистить мозаику флешка"), this));
+    m_clearFishFlash.reset(new QAction(tr("Очистить рыбов флешка"), this));
+
+    //transect
+    m_startStopTransect.reset(new QAction(tr("Трансекта (помогите)"), this));
+}
+
+
+//mosaic
+void MainWindow::mosaicPhotoBack()
+{
+    if (m_cameraWidget->mosaicPhotoNum < 2) {
+        m_cameraWidget->mosaicPhotoNum -= 1;
+        QDir dir("../photo/mosaic");
+        dir.remove(QString::number(m_cameraWidget->mosaicPhotoNum) + ".png");
+    }
+}
+
+void MainWindow::sendMosaicToFlash()
+{
+    QDir dir(flashPath + "photo/mosaic");
+    if (dir.exists())
+    {
+        for (int i = 0; i < 9; i++) {
+            QFile::copy("../photo/mosaic/" + QString::number(i) + ".png", flashPath + "photo/mosaic/" + QString::number(i) + ".png");
+        }
+    }
+}
+
+
+//fishLength
+void MainWindow::fishPhotoBack()
+{
+    if (m_cameraWidget->currentFishNum > 1)
+    {
+        QDir dir("../photo/fish/");
+        if (dir.exists()) {
+            dir.remove(QString::number(m_cameraWidget->currentFishNum) + ".png");
+            m_cameraWidget->currentFishNum -= 1;
+        }
+    }
+}
+
+void MainWindow::sendFishToFlash()
+{
+    QDir dir(flashPath + "photo/fish");
+    if (dir.exists())
+    {
+        for (int i = 1; i <= m_cameraWidget->fishCount; i++) {
+            QFile::copy("../photo/fish/" + QString::number(i) + ".png", flashPath + "photo/fish/" + QString::number(i) + ".png");
+        }
+    }
+}
+
+
+//env
+void MainWindow::clearAllPhotos()
+{
+    clearMosaicPhotos();
+    clearFishPhotos();
+}
+
+void MainWindow::clearMosaicPhotos()
+{
+    QDir dir("../photo/mosaic");
+    if (dir.exists())
+    {
+        for (int i = 1; i < 9; i++) {
+            dir.remove(QString::number(i) + ".png");
+        }
+        m_cameraWidget->mosaicPhotoNum = 1;
+    }
+}
+
+void MainWindow::clearFishPhotos()
+{
+    QDir dir("../photo/fish");
+    if (dir.exists())
+    {
+        for (int i = 1; i <= m_cameraWidget->fishCount; i++) {
+            dir.remove(QString::number(i) + ".png");
+        }
+        m_cameraWidget->currentFishNum = 1;
+    }
+}
+
+void MainWindow::clearAllFlash()
+{
+    clearMosaicFlash();
+    clearFishFlash();
+}
+
+void MainWindow::clearMosaicFlash()
+{
+    QDir dir(flashPath + "photo/mosaic");
+    if (dir.exists()) {
+        for (int i = 1; i < 9; i++) {
+            dir.remove(QString::number(i) + ".png");
+        }
+    }
+}
+
+void MainWindow::clearFishFlash()
+{
+    QDir dir(flashPath + "photo/fish");
+    if (dir.exists()) {
+        for (int i = 1; i <= m_cameraWidget->fishCount; i++)
+        {
+            dir.remove(QString::number(i) + ".png");
+        }
+    }
+}
+
+
+//hotkeys
+void MainWindow::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key())
+    {
+        case Qt::Key_Z:
+            qDebug() << "Z";
+            break;
+        case Qt::Key_X:
+            qDebug() << "X";
+            break;
+        case Qt::Key_C:
+            qDebug() << "C";
+            break;
+    }
+}
+
+
+//transect
+void MainWindow::transect()
+{
+    if (isTransect)
+    {
+//        float current_time = QDateTime::currentMSecsSinceEpoch();
+
+//        float depth_error = RovSingleton::instance()->telimetry().depth - keepingDepth;
+//        float yaw_error = RovSingleton::instance()->telimetry().yaw - keepingYaw;
+
+//        float z_power = 0;
+//        float power1 = 0;
+//        float power2 = 0;
+//        float power3 = 0;
+//        float power4 = 0;
+
+//        float power_value = error * 70;
+//        float diff_value = 5 / (current_time - m_depth_prev_time) * (error - m_depth_prev_error);
+
+//        m_power = clamp(power_value + diff_value, 100, -100) * 0.6;
+
+//        RovSingleton::instance()->control().axisZ = static_cast<qint8>(m_power);
+
+//        m_depth_prev_time = current_time;
+//        m_depth_prev_error = error;
+    }
 }

@@ -36,52 +36,8 @@ RovCameraWidget::RovCameraWidget(QWidget* parent)
 
 void RovCameraWidget::startCapture()
 {
-    //const QList<QCameraInfo> availableCameras = QCameraInfo::availableCameras();
-    //if (availableCameras.empty()) {
-    //    qWarning() << "Нет доступных камер!";
-    //    return;
-    //}
-
-//    cv::VideoCapture camera;
-//    int device_count = 0;
-//    while (true) {
-//        if (!camera.open(device_count++)) {
-//            break;
-//        }
-//    }
-//    ca1era.release();
-//    device_count -= 1;
-//    qDebug() << m_cameraList->currentIndex();
-
-    //qDebug() << 1;
     cap.open(0);
     isProccessCamera = true;
-
-    //while (true) {
-    //    cv::Mat originalImage;
-    //    cap.read(originalImage);
-    //    cv::imshow("image", originalImage);
-    //    cv::waitKey(50);
-    //}
-//    camera.open(cv::CAP_V4L2);
-    //qDebug() << 2;
-    //cv::Mat originalImage;
-    //cap.read(originalImage);
-    //qDebug() << 3;
-    //cv::cvtColor(originalImage, originalImage, cv::COLOR_BGR2RGB);
-    //QImage qOriginalImage((uchar*)originalImage.data, originalImage.cols,
-    //    originalImage.rows, originalImage.step, QImage::Format_RGB888);
-    //m_cameraLabel.data()->setPixmap(QPixmap::fromImage(qOriginalImage));
-    //m_cameraLabel.data()->setScaledContents(true);
-    //m_cameraLabel.data()->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-
-    //QCameraInfo cameraInfo = availableCameras.at(m_cameraList->currentIndex());
-
-    //m_camera.reset(new QCamera(cameraInfo));
-    //m_camera->setViewfinder(m_cameraView.data());
-    ////m_camera->setViewfinder(m_cameraCapture.data());
-    //m_camera->start();
-    //setCurrentIndex(WidgetType::CameraViewWidget);
 }
 
 void RovCameraWidget::proccessCamera()
@@ -91,7 +47,6 @@ void RovCameraWidget::proccessCamera()
         cv::Mat originalImage;
         cap.read(originalImage);
         cv::cvtColor(originalImage, originalImage, cv::COLOR_BGR2RGB);
-        //cv::imshow("image", originalImage);
         QImage qOriginalImage((uchar*)originalImage.data, originalImage.cols,
             originalImage.rows, originalImage.step, QImage::Format_RGB888);
         m_cameraLabel.data()->setPixmap(QPixmap::fromImage(qOriginalImage));
@@ -102,12 +57,6 @@ void RovCameraWidget::proccessCamera()
 
 void RovCameraWidget::stopCapture()
 {
-//    if (!m_camera) {
-//        return;
-//    }
-
-//    m_camera->stop();
-//    setCurrentIndex(WidgetType::CameraSelectionWidget);
     isProccessCamera = false;
     cap.release();
 }
@@ -175,8 +124,11 @@ void RovCameraWidget::createConnections()
 }
 
 //mosaic
-void RovCameraWidget::takePhoto()
+void RovCameraWidget::takeMosaicPhoto()
 {
+    QDir dir("../photo/mosaic");
+    if (!dir.exists()) dir.mkpath(".");
+
     if (isProccessCamera)
     {
         if (mosaicPhotoNum >= 9) mosaicPhotoNum = 1;
@@ -184,29 +136,18 @@ void RovCameraWidget::takePhoto()
         cap.read(img);
         cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
         QImage image(img.data, img.cols, img.rows, QImage::Format_RGB888);
-        image.save("../photo/" + QString::number(mosaicPhotoNum) + ".png");
+        image.save("../photo/mosaic/" + QString::number(mosaicPhotoNum) + ".png");
         if (mosaicPhotoNum >= 8) qDebug() << "all photos collected";
         mosaicPhotoNum += 1;
     }
 }
 
-void RovCameraWidget::onePhotoBack()
+void RovCameraWidget::mosaicPhotoBack()
 {
-    if (!mosaicPhotoNum < 2) {
+    if (mosaicPhotoNum < 2) {
         mosaicPhotoNum -= 1;
-        QDir dir("../photo/");
+        QDir dir("../photo/mosaic");
         dir.remove(QString::number(mosaicPhotoNum) + ".png");
-    }
-}
-
-void RovCameraWidget::clearPhotos()
-{
-    mosaicPhotoNum = 1;
-    QDir dir("../photo/");
-    if (dir.exists()) {
-        for (int i = 1; i < 9; i++) {
-            dir.remove(QString::number(i) + ".png");
-        }
     }
 }
 
@@ -246,12 +187,6 @@ void RovCameraWidget::countShip()
 
         cnt = findCnt(img, low, up);
         cnt1 = findCnt(img, low1, up1);
-    //    qDebug() << cnt.size() << cnt1.size();
-    //    cvtColor(img, hsv, COLOR_RGB2HSV);
-    //    inRange(hsv, low, up, mask);
-    //    findContours(mask, cnt, RETR_TREE, CHAIN_APPROX_SIMPLE);
-    //    inRange(hsv, low1, up1, mask1);
-    //    findContours(mask1, cnt1, RETR_TREE, CHAIN_APPROX_SIMPLE);
 
         for (auto count : cnt) {
             area = cv::contourArea(count);
@@ -275,11 +210,21 @@ void RovCameraWidget::countShip()
         r += r * 0.25;
         if (40 < r and r < 180) qDebug() << r;
         else qDebug() << "not";
+    }
+}
 
-    //    cv::cvtColor(img, hsv, cv::COLOR_RGB2HSV);
-    //    cv::inRange(hsv, low1, up1, hsv);
-    //    cv::imshow("img", hsv);
-    //    showFrame(img);
-//        cv::waitKey(1);
+
+//fishLength
+void RovCameraWidget::takeFishPhoto()
+{
+    if (isProccessCamera)
+    {
+        cv::Mat img;
+        cap.read(img);
+        cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
+        QImage image(img.data, img.cols, img.rows, QImage::Format_RGB888);
+        image.save("../photo/fish/" + QString::number(currentFishNum) + ".png");
+        currentFishNum += 1;
+        if (currentFishNum == 7) { currentFishNum = 1; qDebug() << QString::number(fishCount) + " fish photos"; }
     }
 }
